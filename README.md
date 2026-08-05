@@ -19,6 +19,7 @@ All these operator should be installed :
 * OpenShift AI Operator (Red Hat)
 * OpenShift Service Mesh 3 (Red Hat)
 * OpenShift Serverless (Red Hat)
+* JobSet Operator (Red Hat)
 * Connectivity Link (Red Hat) : Needed by llm-d
 * Leader Worker Set Operator : Needed by llm-d
 
