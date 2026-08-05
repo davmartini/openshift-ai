@@ -1,0 +1,87 @@
+apiVersion: machine.openshift.io/v1beta1
+kind: MachineSet
+metadata:
+  annotations:
+    capacity.cluster-autoscaler.kubernetes.io/labels: kubernetes.io/arch=amd64
+    machine.openshift.io/GPU: '0'
+    machine.openshift.io/memoryMb: '65536'
+    machine.openshift.io/vCPU: '16'
+  resourceVersion: '24188'
+  name: cluster-lzmfk-dx66t-worker-eu-west-1b
+  namespace: openshift-machine-api
+  labels:
+    machine.openshift.io/cluster-api-cluster: cluster-lzmfk-dx66t
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      machine.openshift.io/cluster-api-cluster: cluster-lzmfk-dx66t
+      machine.openshift.io/cluster-api-machineset: cluster-lzmfk-dx66t-worker-eu-west-1b
+  template:
+    metadata:
+      labels:
+        machine.openshift.io/cluster-api-cluster: cluster-lzmfk-dx66t
+        machine.openshift.io/cluster-api-machine-role: worker
+        machine.openshift.io/cluster-api-machine-type: worker
+        machine.openshift.io/cluster-api-machineset: cluster-lzmfk-dx66t-worker-eu-west-1b
+    spec:
+      lifecycleHooks: {}
+      metadata: {}
+      providerSpec:
+        value:
+          userDataSecret:
+            name: worker-user-data
+          placement:
+            availabilityZone: eu-west-1b
+            region: eu-west-1
+          credentialsSecret:
+            name: aws-cloud-credentials
+          capacityReservationId: ''
+          instanceType: m6a.4xlarge
+          metadata:
+            creationTimestamp: null
+          blockDevices:
+            - ebs:
+                encrypted: true
+                iops: 0
+                kmsKey:
+                  arn: ''
+                volumeSize: 100
+                volumeType: gp2
+          securityGroups:
+            - filters:
+                - name: 'tag:Name'
+                  values:
+                    - cluster-lzmfk-dx66t-node
+            - filters:
+                - name: 'tag:Name'
+                  values:
+                    - cluster-lzmfk-dx66t-lb
+          kind: AWSMachineProviderConfig
+          metadataServiceOptions: {}
+          tags:
+            - name: kubernetes.io/cluster/cluster-lzmfk-dx66t
+              value: owned
+            - name: Stack
+              value: project ocp4-cluster-lzmfk
+            - name: env_type
+              value: ocp4-cluster
+            - name: guid
+              value: lzmfk
+            - name: owner
+              value: unknown
+            - name: platform
+              value: RHPDS
+            - name: uuid
+              value: e789dd5e-d04f-57e4-a6f3-e455ffa5a53b
+          deviceIndex: 0
+          ami:
+            id: ami-08fd1bf9720dcf92a
+          subnet:
+            filters:
+              - name: 'tag:Name'
+                values:
+                  - cluster-lzmfk-dx66t-subnet-private-eu-west-1b
+          apiVersion: machine.openshift.io/v1beta1
+          iamInstanceProfile:
+            id: cluster-lzmfk-dx66t-worker-profile
