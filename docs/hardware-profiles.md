@@ -10,7 +10,6 @@ Hardware profiles are based on Taints and Tolerations and can be created on the 
 ```
 apiVersion: infrastructure.opendatahub.io/v1
 kind: HardwareProfile
-metadata:
   name: nvidia-l40-profile
   namespace: redhat-ods-applications
 spec:
@@ -27,11 +26,17 @@ spec:
       maxCount: 16Gi
       minCount: 2Gi
       resourceType: Memory
+    - defaultCount: 1
+      displayName: Accelerator
+      identifier: nvidia.com/gpu
+      maxCount: 4
+      minCount: 1
+      resourceType: Accelerator
   scheduling:
     node:
       nodeSelector: {}
       tolerations:
-        - effect: NoExecute
+        - effect: NoSchedule
           key: nvidia.com/gpu
           operator: Equal
           value: NVIDIA-L40-SHARED
@@ -59,6 +64,12 @@ spec:
       maxCount: 16Gi
       minCount: 2Gi
       resourceType: Memory
+    - defaultCount: 1
+      displayName: Accelerator
+      identifier: nvidia.com/gpu
+      maxCount: 4
+      minCount: 1
+      resourceType: Accelerator
   scheduling:
     node:
       nodeSelector: {}
