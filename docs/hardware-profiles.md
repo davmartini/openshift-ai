@@ -69,3 +69,7 @@ spec:
           value: NVIDIA-L40S-SHARED
     type: Node
 ```
+
+![hw-profile-crd](../images/crd-hw-profile.png)
+
+![hw-profile-crd](../images/hardware-profile.png)
