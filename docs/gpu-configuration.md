@@ -101,10 +101,36 @@ daemonset.apps/nvidia-operator-validator                 1         1         1  
 - **Components**: GPU drivers, container runtime, device plugins, monitoring
 
 
-## Step 4: 
+## Step 4: Enable GPU Observability (Optionnal)
 
+1. Download the latest NVIDIA DCGM Exporter Dashboard from the DCGM Exporter repository on GitHub:
+```
+curl -LfO https://github.com/NVIDIA/dcgm-exporter/raw/main/grafana/dcgm-exporter-dashboard.json
+```
 
+2. Create a config map from the downloaded file in the openshift-config-managed namespace:
+```
+oc create configmap nvidia-dcgm-exporter-dashboard -n openshift-config-managed --from-file=dcgm-exporter-dashboard.json
+```
 
+3. Label the config map to expose the dashboard in the Administrator perspective of the web console:
+```
+oc label configmap nvidia-dcgm-exporter-dashboard -n openshift-config-managed "console.openshift.io/dashboard=true"
+```
+
+4. Optional: Label the config map to expose the dashboard in the Developer perspecitive of the web console:
+```
+oc label configmap nvidia-dcgm-exporter-dashboard -n openshift-config-managed "console.openshift.io/odc-dashboard=true"
+```
+
+5. View the created resource and verify the labels:
+```
+oc -n openshift-config-managed get cm nvidia-dcgm-exporter-dashboard --show-labels
+NAME                             DATA   AGE   LABELS
+nvidia-dcgm-exporter-dashboard   1      16s   console.openshift.io/dashboard=true
+```
+6. New Dashboard in OpenShift Observability stack
+![nvidia-dashboard](../images/nvidia-dashboard.png)
 
 
 
