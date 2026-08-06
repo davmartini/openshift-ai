@@ -15,3 +15,9 @@
 ![notebook](../images/workbench-creation4.png)
 
 3. Access to your workbench
+![notebook](../images/workbench-creation5.png)
+
+![notebook](../images/workbench-creation6.png)
+
+4. Workbench = Pod in OpenShift
+![notebook](../images/workbench-pod.png)
