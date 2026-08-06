@@ -21,7 +21,7 @@ This repository resume all tests performed on a OpenShift cluster.
 
 [OpenShift prerequisites](./docs/openshift-install.md)  
 [GPU MachineSet and GPU configuration](./docs/gpu-configuration.md)  
-[Accelerator profiles](./docs/accelerator-profiles.md)  
+[Hardware profiles](./docs/hardware-profiles.md)  
 [DRA](./docs/dra.md)  
 [NoteBook](./docs/notebook.md)  
 [LLM inference](./docs/inference.md)  
