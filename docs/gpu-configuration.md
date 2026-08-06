@@ -30,7 +30,7 @@ The machine set script creates AWS EC2 instances with GPU support and configures
 5. Answer "n" for spot instances - Use on-demand instances for stability
 
 **What this does:**
-- Creates GPU-enabled EC2 instances (g5.xlarge for L40S)
+- Creates GPU-enabled EC2 instances (g6.2xlarge for L40 or g6e.2xlarge for L40S)
 - Applies `nvidia.com/gpu` taints to GPU nodes
 - Adds appropriate accelerator labels for workload scheduling
 - Configures networking and security groups
@@ -45,10 +45,14 @@ Wait for nodes to be provisioned (typically 5-10 minutes).
 
 ## Step 2: Deploy Node Feature Discovery (NFD)
 
-NFD detects hardware features on cluster nodes and labels them for workload scheduling.
+* Install the NFD Operatior provided by Red Hat
+* Create a **NodeFeatureDiscovery** instance
+* Check if pci-10de (NVIDIA ID) are available on OpenShit nodes
 
-```bash
-oc apply -f ./nfd
+```
+oc get nodes -l 'feature.node.kubernetes.io/pci-10de.present=true'
+NAME                                       STATUS   ROLES    AGE     VERSION
+ip-10-0-38-13.us-east-2.compute.internal   Ready    worker   5m28s   v1.35.6
 ```
 
 **What this deploys:**
@@ -56,20 +60,61 @@ oc apply -f ./nfd
 - **Operator**: Red Hat NFD operator (v4.18.0)
 - **Configuration**: Scans nodes every 60 seconds for PCI devices including GPUs
 
+
 ## Step 3: Deploy NVIDIA GPU Operator
 
 The GPU Operator automates the management of NVIDIA GPU software stack.
 
-```bash
-oc apply -f ./gpu-operator
+* Install the certified NVIDIA GPU Operatior provided by NVIDIA
+* Create a default **ClusterPolicy** instance
+* Check if NVIDIA Operator components are ready
+```
+oc get pods,daemonset -n nvidia-gpu-operator
+NAME                                               READY   STATUS      RESTARTS   AGE
+pod/gpu-feature-discovery-zzsmj                    1/1     Running     0          4m52s
+pod/gpu-operator-798f4c5d9d-kqhfm                  1/1     Running     0          7m16s
+pod/nvidia-container-toolkit-daemonset-tjqv5       1/1     Running     0          4m52s
+pod/nvidia-cuda-validator-58k2l                    0/1     Completed   0          97s
+pod/nvidia-dcgm-dj5mm                              1/1     Running     0          4m52s
+pod/nvidia-dcgm-exporter-mbsc9                     1/1     Running     0          49s
+pod/nvidia-device-plugin-daemonset-fhrxq           1/1     Running     0          4m52s
+pod/nvidia-driver-daemonset-9.8.20260727-0-4c4s2   2/2     Running     0          5m2s
+pod/nvidia-node-status-exporter-4gvbs              1/1     Running     0          4m58s
+pod/nvidia-operator-validator-l2sg4                1/1     Running     0          4m52s
+
+NAME                                                     DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                                                                                                  AGE
+daemonset.apps/gpu-feature-discovery                     1         1         1       1            1           nvidia.com/gpu.deploy.gpu-feature-discovery=true                                                               4m59s
+daemonset.apps/nvidia-container-toolkit-daemonset        1         1         1       1            1           nvidia.com/gpu.deploy.container-toolkit=true                                                                   5m1s
+daemonset.apps/nvidia-dcgm                               1         1         1       1            1           nvidia.com/gpu.deploy.dcgm=true                                                                                5m
+daemonset.apps/nvidia-dcgm-exporter                      1         1         0       1            0           nvidia.com/gpu.deploy.dcgm-exporter=true                                                                       5m
+daemonset.apps/nvidia-device-plugin-daemonset            1         1         1       1            1           nvidia.com/gpu.deploy.device-plugin=true                                                                       5m1s
+daemonset.apps/nvidia-device-plugin-mps-control-daemon   0         0         0       0            0           nvidia.com/gpu.deploy.device-plugin=true,nvidia.com/mps.capable=true                                           5m
+daemonset.apps/nvidia-driver-daemonset-9.8.20260727-0    1         1         1       1            1           feature.node.kubernetes.io/system-os_release.OSTREE_VERSION=9.8.20260727-0,nvidia.com/gpu.deploy.driver=true   5m2s
+daemonset.apps/nvidia-mig-manager                        0         0         0       0            0           nvidia.com/gpu.deploy.mig-manager=true                                                                         4m59s
+daemonset.apps/nvidia-node-status-exporter               1         1         1       1            1           nvidia.com/gpu.deploy.node-status-exporter=true                                                                4m58s
+daemonset.apps/nvidia-operator-validator                 1         1         1       1            1           nvidia.com/gpu.deploy.operator-validator=true   
 ```
 
 **What this deploys:**
 - **Namespace**: `nvidia-gpu-operator`
-- **Operator**: NVIDIA GPU Operator (v25.3.0) from certified operators
+- **Operator**: NVIDIA GPU Operator (v26.3.3) from certified operators
 - **Components**: GPU drivers, container runtime, device plugins, monitoring
 
-Wait for both NFD and GPU Operator to be fully installed before proceeding.
+
+## Step 4: 
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Step 4: Deploy Custom Resources (CRs)
 
