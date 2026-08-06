@@ -19,10 +19,10 @@ This repository resume all tests performed on a OpenShift cluster.
 
 ## Parts
 
-[OpenShift prerequisites](./docs/openshift-install.md)  
-[GPU MachineSet and GPU configuration](./docs/gpu-configuration.md)  
-[Hardware profiles](./docs/hardware-profiles.md)  
+[1. OpenShift prerequisites](./docs/openshift-install.md)  
+[2. GPU MachineSet and GPU configuration](./docs/gpu-configuration.md)  
+[3. Hardware profiles](./docs/hardware-profiles.md)
+[4. NoteBook](./docs/notebook.md)  
 [DRA](./docs/dra.md)  
-[NoteBook](./docs/notebook.md)  
 [LLM inference](./docs/inference.md)  
 [Red Hat Build of Kueue](./docs/kueue)  
