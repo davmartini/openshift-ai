@@ -45,10 +45,9 @@ Wait for nodes to be provisioned (typically 5-10 minutes).
 
 ## Step 2: Deploy Node Feature Discovery (NFD)
 
-* Install the NFD Operatior provided by Red Hat
-* Create a **NodeFeatureDiscovery** instance
-* Check if pci-10de (NVIDIA ID) are available on OpenShit nodes
-
+1. Install the NFD Operatior provided by Red Hat
+2. Create a **NodeFeatureDiscovery** instance
+3. Check if pci-10de (NVIDIA ID) are available on OpenShit nodes
 ```
 oc get nodes -l 'feature.node.kubernetes.io/pci-10de.present=true'
 NAME                                       STATUS   ROLES    AGE     VERSION
@@ -65,9 +64,9 @@ ip-10-0-38-13.us-east-2.compute.internal   Ready    worker   5m28s   v1.35.6
 
 The GPU Operator automates the management of NVIDIA GPU software stack.
 
-* Install the certified NVIDIA GPU Operatior provided by NVIDIA
-* Create a default **ClusterPolicy** instance
-* Check if NVIDIA Operator components are ready
+1. Install the certified NVIDIA GPU Operatior provided by NVIDIA
+2. Create a default **ClusterPolicy** instance
+3. Check if NVIDIA Operator components are ready
 ```
 oc get pods,daemonset -n nvidia-gpu-operator
 NAME                                               READY   STATUS      RESTARTS   AGE
@@ -94,14 +93,88 @@ daemonset.apps/nvidia-mig-manager                        0         0         0  
 daemonset.apps/nvidia-node-status-exporter               1         1         1       1            1           nvidia.com/gpu.deploy.node-status-exporter=true                                                                4m58s
 daemonset.apps/nvidia-operator-validator                 1         1         1       1            1           nvidia.com/gpu.deploy.operator-validator=true   
 ```
+4. Check if NVIDIA GPU are available
+```
+oc describe node | egrep 'Name:|Capacity|nvidia.com/gpu:|Allocatable:'
+Name:               ip-10-0-11-46.us-east-2.compute.internal
+Capacity:
+Allocatable:
+Name:               ip-10-0-14-232.us-east-2.compute.internal
+Capacity:
+Allocatable:
+Name:               ip-10-0-3-90.us-east-2.compute.internal
+Capacity:
+Allocatable:
+Name:               ip-10-0-31-95.us-east-2.compute.internal
+Capacity:
+Allocatable:
+Name:               ip-10-0-38-13.us-east-2.compute.internal
+Capacity:
+  nvidia.com/gpu:     1
+Allocatable:
+  nvidia.com/gpu:     1
+Name:               ip-10-0-63-4.us-east-2.compute.internal
+Capacity:
+Allocatable:
+```
+5. Check TAINTS
+```
+oc get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints
+NAME                                        TAINTS
+ip-10-0-11-46.us-east-2.compute.internal    <none>
+ip-10-0-14-232.us-east-2.compute.internal   <none>
+ip-10-0-3-90.us-east-2.compute.internal     [map[effect:NoSchedule key:node-role.kubernetes.io/master]]
+ip-10-0-31-95.us-east-2.compute.internal    [map[effect:NoSchedule key:node-role.kubernetes.io/master]]
+ip-10-0-38-13.us-east-2.compute.internal    [map[effect:NoSchedule key:nvidia.com/gpu value:NVIDIA-L40-SHARED]]
+ip-10-0-63-4.us-east-2.compute.internal     [map[effect:NoSchedule key:node-role.kubernetes.io/master]]
+```
+6. Getting information about the GPU
+```
+oc project nvidia-gpu-operator
+oc get pod -owide -lopenshift.driver-toolkit=true
+NAME                                           READY   STATUS    RESTARTS   AGE   IP           NODE                                       NOMINATED NODE   READINESS GATES
+nvidia-driver-daemonset-9.8.20260727-0-4c4s2   2/2     Running   0          23m   10.129.2.5   ip-10-0-38-13.us-east-2.compute.internal   <none>           <none>
+oc exec -it nvidia-driver-daemonset-9.8.20260727-0-4c4s2 -- nvidia-smi
+Thu Aug  6 14:37:01 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.126.20             Driver Version: 580.126.20     CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA L4                      On  |   00000000:31:00.0 Off |                    0 |
+| N/A   38C    P8             16W /   72W |       0MiB /  23034MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+```
 
 **What this deploys:**
 - **Namespace**: `nvidia-gpu-operator`
 - **Operator**: NVIDIA GPU Operator (v26.3.3) from certified operators
 - **Components**: GPU drivers, container runtime, device plugins, monitoring
 
+## Step 4: Add a taint to node with GPU
 
-## Step 4: Enable GPU Observability (Optionnal)
+A taint allows the possibility to dedicate some specific nodes (with GPU for example) to specific workloads (AI workload with GUP needs for example).
+
+**We have to taint specific nodes with specifics keys to do that:**
+```
+  taints:
+    - key: nvidia.com/gpu
+      value: NVIDIA-L40-PRIVATE
+      effect: NoSchedule
+```
+
+## Step 5: Enable GPU Observability (Optional)
 
 1. Download the latest NVIDIA DCGM Exporter Dashboard from the DCGM Exporter repository on GitHub:
 ```
@@ -132,62 +205,47 @@ nvidia-dcgm-exporter-dashboard   1      16s   console.openshift.io/dashboard=tru
 6. New Dashboard in OpenShift Observability stack
 ![nvidia-dashboard](../images/nvidia-dashboard.png)
 
+## Step 6: Running a sample GPU Application (Optional)
 
+1. Run the following:
 
-
-
-
-
-
-
-
-
-## Step 4: Deploy Custom Resources (CRs)
-
-The CRs configure how NFD and the GPU Operator should operate in your cluster.
-
-```bash
-oc apply -f ./crs
+```
+cat << EOF | oc create -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cuda-vectoradd
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: cuda-vectoradd
+    image: "nvcr.io/nvidia/k8s/cuda-sample:vectoradd-cuda12.5.0-ubi8"
+    resources:
+      limits:
+        nvidia.com/gpu: 1 
+  tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+EOF
+pod/cuda-vectoradd created
 ```
 
-**What this configures:**
+2. Check the logs of the container:
+```
+oc logs cuda-vectoradd
+[Vector addition of 50000 elements]
+Copy input data from the host memory to the CUDA device
+CUDA kernel launch with 196 blocks of 256 threads
+Copy output data from the CUDA device to the host memory
+Test PASSED
+Done
 
-### Node Feature Discovery Configuration
-- **Hardware Detection**: Identifies NVIDIA GPUs and other PCI devices
-- **Node Labeling**: Adds vendor and device information as node labels
-- **Scheduling**: Enables GPU-aware pod scheduling
-
-### GPU Cluster Policy
-- **Driver Management**: Automatic NVIDIA driver installation and updates
-- **Monitoring**: DCGM (Data Center GPU Manager) for GPU metrics
-- **Device Plugin**: Exposes GPU resources to Kubernetes scheduler
-- **MIG Support**: Multi-Instance GPU configuration capability
-- **Validation**: GPU functionality testing and validation
-
-### Driver Configuration
-- **Container Image**: Specific NVIDIA driver version with SHA256 verification
-- **Registry**: Uses NVIDIA's official container registry
-- **Integration**: OpenShift driver toolkit compatibility
-
-## Verification
-
-After deployment, verify your GPU setup:
-
-```bash
-# Check GPU nodes
-oc get nodes -l nvidia.com/gpu.present=true
-
-# Check GPU operator pods
-oc get pods -n nvidia-gpu-operator
-
-# Check NFD labels on GPU nodes
-oc describe node <gpu-node-name> | grep nvidia
-
-# Check available GPU resources
-oc describe node <gpu-node-name> | grep nvidia.com/gpu
+oc delete pod cuda-vectoradd
+pod "cuda-vectoradd" deleted from nvidia-gpu-operator namespace
 ```
 
-## Supported GPU Types
+## Conclusion
 
 The setup script supports 14 different GPU configurations including:
 - Tesla T4, A10G, A100 (various configurations)
@@ -217,17 +275,5 @@ The setup script supports 14 different GPU configurations including:
                     │ • GPU-ready runtime │
                     │ • Monitoring agents │
                     └─────────────────────┘
-```
-
-## Step 5: Add a taint to node with GPU
-
-A taint allows the possibility to dedicate some specific nodes (with GPU for example) to specific workloads (AI workload with GUP needs for example).
-
-**We have to taint specific nodes with specifics keys to do that:**
-```
-  taints:
-    - key: nvidia.com/gpu
-      value: NVIDIA-L40S-PRIVATE
-      effect: NoSchedule
 ```
 
