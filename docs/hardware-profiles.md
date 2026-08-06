@@ -6,7 +6,7 @@ Hardware profiles are based on Taints and Tolerations and can be created on the 
 
 ## Hardware profiles definition
 
-1. NVIDIA L40 profil
+1. **NVIDIA L40 profil**
 ```
 apiVersion: infrastructure.opendatahub.io/v1
 kind: HardwareProfile
@@ -38,7 +38,7 @@ spec:
     type: Node
 ```
 
-2. NVIDIA L40S profil
+2. **NVIDIA L40S profil**
 ```
 apiVersion: infrastructure.opendatahub.io/v1
 kind: HardwareProfile
