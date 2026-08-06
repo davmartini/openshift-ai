@@ -70,6 +70,8 @@ spec:
     type: Node
 ```
 
+## Hardware profile CRD in OpenShift WebUI
 ![hw-profile-crd](../images/crd-hw-profile.png)
 
-![hw-profile-crd](../images/hardware-profile.png)
+## Hardware profile in OpenShift AI WebUI
+![hw-profile-webui](../images/hardware-profile.png)
