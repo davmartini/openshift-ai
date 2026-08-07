@@ -22,7 +22,7 @@
 ## 4. Workbench = Pod in OpenShift
 ![notebook](../images/workbench-pod.png)
 
-## 5. Chech GPU usage
+## 5. Check GPU usage
 ```
 oc describe node | egrep 'Name:|Capacity|nvidia.com/gpu:|Allocatable:'
 Name:               ip-10-0-11-46.us-east-2.compute.internal
