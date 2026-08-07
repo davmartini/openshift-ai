@@ -86,3 +86,9 @@ spec:
 3. Result
 
 ![playground](../images/playground1.png)
+
+![playground](../images/playground2.png)
+
+![playground](../images/playground3.png)
+
+![playground](../images/playground4.png)
