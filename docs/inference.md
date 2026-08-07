@@ -69,6 +69,9 @@ oc patch odhdashboardconfig odh-dashboard-config \
 
 ![llmd](../images/llmd6.png)
 
+![llmd](../images/llmd7.png)
+
+
 ### llm-d observability
 
 1. Enable enableUserWorkload for OpenShift Observability
