@@ -26,6 +26,6 @@ This repository resume all tests performed on a OpenShift cluster.
 [5. NoteBook](./docs/notebook.md)  
 [6. LLM inference](./docs/inference.md)  
 [7. Gen AI playground](./docs/playground.md)  
-[7. Model-as-a-Service (MaaS)](./docs/maas.md)  
+[8. Models-as-a-Service (MaaS)](./docs/maas.md)  
 [Red Hat Build of Kueue](./docs/kueue)  
 [DRA](./docs/dra.md)  

@@ -4,7 +4,7 @@
 
 ## Enable Gen AI playground
 
-1. Enable GenAI in OpenShift AI Dashboard
+1. Enable GenAI in OpenShift AI Dashboard CRD
 ```
 apiVersion: opendatahub.io/v1alpha
 kind: OdhDashboardConfig
@@ -25,3 +25,64 @@ spec:
   templateDisablement: []
   templateOrder: []
 ```
+
+2. Enable the LLamaStack in default-dsc CRD
+```
+apiVersion: datasciencecluster.opendatahub.io/v2
+kind: DataScienceCluster
+metadata:
+  name: default-dsc
+spec:
+  components:
+    sparkoperator:
+      managementState: Removed
+    kserve:
+      managementState: Managed
+      modelsAsService:
+        managementState: Removed
+      nim:
+        airGapped: false
+        managementState: Managed
+      rawDeploymentServiceConfig: Headless
+      wva:
+        managementState: Removed
+    modelregistry:
+      managementState: Managed
+      registriesNamespace: rhoai-model-registries
+    feastoperator:
+      managementState: Managed
+    trustyai:
+      eval:
+        lmeval:
+          permitCodeExecution: deny
+          permitOnline: deny
+      managementState: Managed
+      mcpGuardrailsMode: false
+    aipipelines:
+      argoWorkflowsControllers:
+        managementState: Managed
+      managementState: Managed
+    ray:
+      managementState: Managed
+    kueue:
+      defaultClusterQueueName: default
+      defaultLocalQueueName: default
+      managementState: Removed
+    workbenches:
+      managementState: Managed
+      workbenchNamespace: rhods-notebooks
+    mlflowoperator:
+      managementState: Managed
+    dashboard:
+      managementState: Managed
+    trainer:
+      managementState: Managed
+    llamastackoperator:
+      managementState: Managed           <<<--- Change this line
+    trainingoperator:
+      managementState: Removed
+```
+
+3. Result
+
+![playground](../images/playground1.png)
