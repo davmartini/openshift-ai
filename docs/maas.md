@@ -441,3 +441,32 @@ maassubscriptions.maas.opendatahub.io
 externalmodels.maas.opendatahub.io
 tenants.maas.opendatahub.io
 ```
+
+### Step 5: Deploy a model with MaaS
+
+> [!WARNING]
+> verify than you have this label on your namespace where you deploy your model **maas.opendatahub.io/gateway-access: 'true'**
+
+![llm-maas](../images/llm-maas1.png)
+
+![llm-maas](../images/llm-maas2.png)
+
+![llm-maas](../images/llm-maas3.png)
+
+![llm-maas](../images/llm-maas4.png)
+
+### Step 6: Add MaaS subscription
+
+#### What's a subscription
+
+In Red Hat OpenShift AI, you can use Models-as-a-Service (MaaS) subscriptions to manage quotas and token limits for AI model serving. With subscriptions, you can grant specific groups quotas for models with configurable token limits based on user group membership.
+
+When multiple teams share large language models, you can use subscriptions to perform the following tasks:
+
+* Prevent resource exhaustion by enforcing token limits per model
+* Provide different access levels for different user groups
+* Track and allocate costs based on team consumption
+* Control which teams can access high-cost or sensitive models
+* Allow users to belong to multiple subscriptions based on their group memberships
+
+MaaS assigns users to subscriptions based on their OpenShift group membership. When a user belongs to multiple groups with different subscriptions, the system uses the subscription with the highest priority level.
