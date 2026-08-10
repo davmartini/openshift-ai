@@ -57,6 +57,9 @@ spec:
 
 ### Step 2: Configure TLS for Models-as-a-Service
 
+> [!WARNING]
+> Thses steps are specific to OCP on AWS. Other steps are required for OCP on BM.
+
 1. Check authorino cert
 ```
 oc get secret authorino-server-cert -n kuadrant-system
@@ -124,6 +127,7 @@ data:
 export CLUSTER_DOMAIN=$(oc get ingresses.config.openshift.io cluster \
   -o jsonpath='{.spec.domain}')
 echo $CLUSTER_DOMAIN
+apps.cluster-r8w6p.r8w6p.sandbox721.opentlc.com
 ```
 
 ```
@@ -132,6 +136,7 @@ export CERT_NAME=$(oc get ingresscontroller default \
   -o jsonpath='{.spec.defaultCertificate.name}' 2>/dev/null)
 export CERT_NAME="${CERT_NAME:-router-certs-default}"
 echo $CERT_NAME
+cert-manager-ingress-cert
 ```
 
 ```
@@ -177,4 +182,30 @@ spec:
          kind: Secret
          name: ${CERT_NAME}                              <<<--- Change value
        mode: Terminate
+```
+
+6. Annotate the Gateway for Authorino TLS bootstrap:
+```
+oc annotate gateway maas-default-gateway -n openshift-ingress \
+  security.opendatahub.io/authorino-tls-bootstrap="true" --overwrite
+```
+
+```
+oc wait --for=condition=Programmed gateway/maas-default-gateway \
+  -n openshift-ingress --timeout=120s
+gateway.gateway.networking.k8s.io/maas-default-gateway condition met
+```
+
+7. Label the redhat-ods-applications namespace where the MaaS API route is created
+```
+oc label namespace redhat-ods-applications \
+  maas.opendatahub.io/gateway-access=true --overwrite
+namespace/redhat-ods-applications labeled
+```
+
+8. Test deployement
+```
+CLUSTER_DOMAIN=$(oc get ingresses.config.openshift.io cluster -o jsonpath='{.spec.domain}')
+echo $CLUSTER_DOMAIN
+curl -vsk https://maas.${CLUSTER_DOMAIN} 2>&1 | grep -E "SSL connection|Connected"
 ```
