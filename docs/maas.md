@@ -421,6 +421,7 @@ spec:
     modelAsService: true                      <<<<--- Add this line
     observabilityDashboard: true              <<<<--- Add this line
     vLLMDeploymentOnMaaS: true                <<<<--- Add this line
+    maasAuthPolicies: true                    <<<<--- Add this line
   hardwareProfileOrder:
     - default-profile
     - nvidia-l40-profile
