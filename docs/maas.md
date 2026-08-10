@@ -209,3 +209,134 @@ CLUSTER_DOMAIN=$(oc get ingresses.config.openshift.io cluster -o jsonpath='{.spe
 echo $CLUSTER_DOMAIN
 curl -vsk https://maas.${CLUSTER_DOMAIN} 2>&1 | grep -E "SSL connection|Connected"
 ```
+
+### Step 3: Create a PostgreSQL BDD for Models-as-a-Service
+
+1. Create the PostgreSQL secret and configuration
+```
+# Generate a random password
+POSTGRES_PASSWORD=$(openssl rand -base64 16 | tr -d '=+/')
+
+# Create postgres-creds (consumed by the PostgreSQL deployment)
+oc create secret generic postgres-creds \
+  -n redhat-ods-applications \
+  --from-literal=POSTGRES_USER=maas \
+  --from-literal=POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
+  --from-literal=POSTGRES_DB=maas
+
+# Create maas-db-config (consumed by maas-api)
+oc create secret generic maas-db-config \
+  -n redhat-ods-applications \
+  --from-literal=DB_CONNECTION_URL="postgresql://maas:${POSTGRES_PASSWORD}@postgres:5432/maas?sslmode=disable"
+```
+
+2. Deploy a PostgreSQL instance
+```
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  namespace: redhat-ods-applications
+  labels:
+    app: postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+```
+
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: redhat-ods-applications
+  labels:
+    app: postgres
+    purpose: poc
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+```
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: redhat-ods-applications
+  labels:
+    app: postgres
+    purpose: poc
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: registry.redhat.io/rhel9/postgresql-16:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRESQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: POSTGRES_USER
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRESQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: POSTGRES_DB
+            - name: PGDATA
+              value: /var/lib/pgsql/data/userdata
+          readinessProbe:
+            exec:
+              command:
+                - /usr/libexec/check-container
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U "$POSTGRESQL_USER" -d "$POSTGRESQL_DATABASE"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/pgsql/data
+              subPath: userdata
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: postgres-data
+```
