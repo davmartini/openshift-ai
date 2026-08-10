@@ -340,3 +340,104 @@ spec:
           persistentVolumeClaim:
             claimName: postgres-data
 ```
+
+3. Verify the PostegreSQL deployement
+```
+oc wait --for=condition=Available deployment/postgres \
+  -n redhat-ods-applications --timeout=120s
+deployment.apps/postgres condition met
+```
+
+### Step 4: Enable Models-as-a-Service
+
+1. Enable 
+```
+apiVersion: datasciencecluster.opendatahub.io/v2
+kind: DataScienceCluster
+metadata:
+  name: default-dsc
+spec:
+  components:
+    sparkoperator:
+      managementState: Removed
+    kserve:
+      managementState: Managed
+      modelsAsService:
+        managementState: Managed              <<<--- Change this line
+      nim:
+        airGapped: false
+        managementState: Managed
+      rawDeploymentServiceConfig: Headless
+      wva:
+        managementState: Removed
+    modelregistry:
+      managementState: Managed
+      registriesNamespace: rhoai-model-registries
+    feastoperator:
+      managementState: Managed
+    trustyai:
+      eval:
+        lmeval:
+          permitCodeExecution: deny
+          permitOnline: deny
+      managementState: Managed
+      mcpGuardrailsMode: false
+    aipipelines:
+      argoWorkflowsControllers:
+        managementState: Managed
+      managementState: Managed
+    ray:
+      managementState: Managed
+    kueue:
+      defaultClusterQueueName: default
+      defaultLocalQueueName: default
+      managementState: Removed
+    workbenches:
+      managementState: Managed
+      workbenchNamespace: rhods-notebooks
+    mlflowoperator:
+      managementState: Managed
+    dashboard:
+      managementState: Managed
+    trainer:
+      managementState: Managed
+    llamastackoperator:
+      managementState: Managed
+    trainingoperator:
+      managementState: Removed
+```
+
+```
+apiVersion: opendatahub.io/v1alpha
+kind: OdhDashboardConfig
+metadata:
+  name: odh-dashboard-config
+  namespace: redhat-ods-applications
+spec:
+  dashboardConfig:
+    disableTracking: false
+    genAiStudio: true
+    llmGatewayField: true
+    modelAsService: true                      <<<<--- Add this line
+    observabilityDashboard: true              <<<<--- Add this line
+    vLLMDeploymentOnMaaS: true                <<<<--- Add this line
+  hardwareProfileOrder:
+    - default-profile
+    - nvidia-l40-profile
+  notebookController:
+    enabled: true
+    notebookNamespace: rhods-notebooks
+    pvcSize: 20Gi
+  templateDisablement: []
+  templateOrder: []
+```
+
+2. Verify 
+```
+oc get crd | grep maas.opendatahub.io
+maasauthpolicies.maas.opendatahub.io
+maasmodelrefs.maas.opendatahub.io
+maassubscriptions.maas.opendatahub.io
+externalmodels.maas.opendatahub.io
+tenants.maas.opendatahub.io
+```
