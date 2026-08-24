@@ -10,6 +10,7 @@ Hardware profiles are based on Taints and Tolerations and can be created on the 
 ```
 apiVersion: infrastructure.opendatahub.io/v1
 kind: HardwareProfile
+metadata:
   name: nvidia-l40-profile
   namespace: redhat-ods-applications
 spec:
