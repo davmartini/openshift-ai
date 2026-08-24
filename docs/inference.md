@@ -7,7 +7,7 @@
 
 **Official documentation:** https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.4/html/deploy_models_using_distributed_inference_with_llm-d/index
 
-### Configuration
+### Gateway Configuration
 
 1. Create a GatewayClass
 ```
@@ -55,6 +55,70 @@ oc patch odhdashboardconfig odh-dashboard-config \
 --type merge \
 -p '{"spec":{"dashboardConfig":{"llmGatewayField":true}}}'
 ```
+
+### Authentication Configuration
+
+1. Create the kuadrant-system namespace
+```
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kuadrant-system
+```
+
+2. Create kuadrant CRD
+```
+apiVersion: kuadrant.io/v1beta1
+kind: Kuadrant
+metadata:
+  name: kuadrant
+  namespace: kuadrant-system
+spec:
+  # Enable observability so the Kuadrant operator creates its own
+  # Limitador/Authorino PodMonitor/ServiceMonitor resources that are
+  # scraped by user-workload monitoring. Required for MaaS observability.
+  observability:
+    enable: true
+```
+
+3. Add the ServingCert annotation to the Authorino Service
+```
+oc annotate svc/authorino-authorino-authorization  service.beta.openshift.io/serving-cert-secret-name=authorino-server-cert -n kuadrant-system
+```
+
+4. Update Authorino to enable SSL
+```
+oc apply -f - <<EOF
+apiVersion: operator.authorino.kuadrant.io/v1beta1
+kind: Authorino
+metadata:
+  name: authorino
+  namespace: kuadrant-system
+spec:
+  replicas: 1
+  clusterWide: true
+  listener:
+    tls:
+      enabled: true
+      certSecretRef:
+        name: authorino-server-cert
+  oidcServer:
+    tls:
+      enabled: false
+EOF
+```
+
+5. Verify that the Authorino pods are ready
+```
+oc wait --for=condition=ready pod -l authorino-resource=authorino -n kuadrant-system --timeout 150s
+```
+
+6. If OpenShift AI was installed before installing Connectivity Link and Kuadrant, restart the controllers
+```
+oc delete pod -n redhat-ods-applications -l app=odh-model-controller
+oc delete pod -n redhat-ods-applications -l control-plane=kserve-controller-manager
+```
+
 ### Model deployement with llm-d via OpenShift AI WebUI
 
 ![llmd](../images/llmd1.png)
