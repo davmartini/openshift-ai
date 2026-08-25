@@ -136,6 +136,41 @@ oc delete pod -n redhat-ods-applications -l control-plane=kserve-controller-mana
 ![llmd](../images/llmd7.png)
 
 
+### Test model inference
+
+
+1. List model
+```
+curl -k -X GET "https://redhataiqwen25-7b-instruct-dmartini-ai.apps.cluster-kcpq5.kcpq5.sandbox3567.opentlc.com/v1/models" \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+```
+{"object":"list","data":[{"id":"redhataiqwen25-7b-instruct","object":"model","created":1787666362,"owned_by":"vllm","root":"/mnt/models","parent":null,"max_model_len":32768,"permission":[{"id":"modelperm-9f91915ff77a954b","object":"model_permission","created":1787666362,"allow_create_engine":false,"allow_sampling":true,"allow_logprobs":true,"allow_search_indices":false,"allow_view":true,"allow_fine_tuning":false,"organization":"*","group":null,"is_blocking":false}]}]}
+```
+
+2. Prompt model
+```
+curl -k -X POST "https://redhataiqwen25-7b-instruct-dmartini-ai.apps.cluster-kcpq5.kcpq5.sandbox3567.opentlc.com/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{
+    "model": "redhataiqwen25-7b-instruct",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Bonjour, peux-tu te présenter brièvement ?"
+      }
+    ],
+    "temperature": 0.7
+  }'
+```
+
+3. Result
+```
+{"id":"chatcmpl-80640b2dc6e51097","object":"chat.completion","created":1787666426,"model":"redhataiqwen25-7b-instruct","choices":[{"index":0,"message":{"role":"assistant","content":"Bonjour ! Je m'appelle Qwen et je suis un assistant virtuel créé par Alibaba Cloud. Je suis ici pour vous aider avec toutes sortes de questions que vous pourriez avoir, de l'aide aux études aux informations générales, en passant par la rédaction de textes ou d'articles. N'hésitez pas à me poser des questions !","refusal":null,"annotations":null,"audio":null,"function_call":null,"tool_calls":[],"reasoning":null},"logprobs":null,"finish_reason":"stop","stop_reason":null,"token_ids":null}],"service_tier":null,"system_fingerprint":null,"usage":{"prompt_tokens":41,"total_tokens":122,"completion_tokens":81,"prompt_tokens_details":null},"prompt_logprobs":null,"prompt_token_ids":null,"kv_transfer_params":null}
+```
+
 ### llm-d observability
 
 1. Enable enableUserWorkload for OpenShift Observability
