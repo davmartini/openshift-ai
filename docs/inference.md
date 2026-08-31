@@ -76,7 +76,7 @@ spec:
         name: router-certs-default
 ```
 
-3. Enable Gateway discovery in the dashboard configuration
+4. Enable Gateway discovery in the dashboard configuration
 ```
 oc patch odhdashboardconfig odh-dashboard-config \
 -n redhat-ods-applications \
