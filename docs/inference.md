@@ -19,7 +19,30 @@ spec:
   controllerName: openshift.io/gateway-controller/v1
 ```
 
-2. Create a Gateway
+2. Create a Gateway config
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openshift-ai-inference-gateway-options
+  namespace: openshift-ingress
+data:
+  deployment: |
+    spec:
+      template:
+        spec:
+          containers:
+          - name: istio-proxy
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: "2"
+                memory: 2Gi
+```
+
+3. Create a Gateway
 ```
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -28,6 +51,11 @@ metadata:
   namespace: openshift-ingress
 spec:
   gatewayClassName: openshift-default
+  infrastructure:
+    parametersRef:
+      group: ""
+      kind: ConfigMap
+      name: openshift-ai-inference-gateway-options
   listeners:
   - name: http
     protocol: HTTP
