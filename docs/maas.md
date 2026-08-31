@@ -65,7 +65,6 @@ spec:
 oc get secret authorino-server-cert -n kuadrant-system
 NAME                    TYPE                DATA   AGE
 authorino-server-cert   kubernetes.io/tls   2      2m29s
-dmartini@dmartini-mac ~ % 
 ```
 
 2. Patch the Authorino CR to enable the TLS listener
@@ -82,7 +81,6 @@ oc patch authorino authorino -n kuadrant-system --type=merge --patch '{
     }
   }
 }'
-authorino.operator.authorino.kuadrant.io/authorino patched
 ```
 
 3. Configure Authorino deployment with TLS certificate env vars
@@ -90,14 +88,12 @@ authorino.operator.authorino.kuadrant.io/authorino patched
 oc -n kuadrant-system set env deployment/authorino \
   SSL_CERT_FILE=/etc/ssl/certs/openshift-service-ca/service-ca-bundle.crt \
   REQUESTS_CA_BUNDLE=/etc/ssl/certs/openshift-service-ca/service-ca-bundle.crt
-deployment.apps/authorino updated
 ```
 
 4. Verify the user-workload monitoring stack is enabled
 ```
 oc wait --for=condition=Available deployment/prometheus-operator \
   -n openshift-user-workload-monitoring --timeout=300s
-deployment.apps/prometheus-operator condition met
 ```
 
 5. Create the MaaS Gateway
@@ -127,7 +123,6 @@ data:
 export CLUSTER_DOMAIN=$(oc get ingresses.config.openshift.io cluster \
   -o jsonpath='{.spec.domain}')
 echo $CLUSTER_DOMAIN
-apps.cluster-r8w6p.r8w6p.sandbox721.opentlc.com
 ```
 
 ```
@@ -136,7 +131,6 @@ export CERT_NAME=$(oc get ingresscontroller default \
   -o jsonpath='{.spec.defaultCertificate.name}' 2>/dev/null)
 export CERT_NAME="${CERT_NAME:-router-certs-default}"
 echo $CERT_NAME
-cert-manager-ingress-cert
 ```
 
 ```
@@ -193,14 +187,12 @@ oc annotate gateway maas-default-gateway -n openshift-ingress \
 ```
 oc wait --for=condition=Programmed gateway/maas-default-gateway \
   -n openshift-ingress --timeout=120s
-gateway.gateway.networking.k8s.io/maas-default-gateway condition met
 ```
 
 7. Label the redhat-ods-applications namespace where the MaaS API route is created
 ```
 oc label namespace redhat-ods-applications \
   maas.opendatahub.io/gateway-access=true --overwrite
-namespace/redhat-ods-applications labeled
 ```
 
 8. Test deployement
