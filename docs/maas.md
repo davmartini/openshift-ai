@@ -202,6 +202,14 @@ echo $CLUSTER_DOMAIN
 curl -vsk https://maas.${CLUSTER_DOMAIN} 2>&1 | grep -E "SSL connection|Connected"
 ```
 
+> [!WARNING]
+> Important step
+
+9. Label namespace where MaaS will be used
+```
+oc label namespace <your-namespace> maas.opendatahub.io/gateway-access=true --overwrite
+```
+
 ### Step 3: Create a PostgreSQL BDD for Models-as-a-Service
 
 1. Create the PostgreSQL secret and configuration
