@@ -210,6 +210,11 @@ curl -vsk https://maas.${CLUSTER_DOMAIN} 2>&1 | grep -E "SSL connection|Connecte
 oc label namespace <your-namespace> maas.opendatahub.io/gateway-access=true --overwrite
 ```
 
+10. Label the namespace where the MaaS API route is created (RHOAI 3.5+)
+```
+oc label namespace redhat-ai-gateway-infra maas.opendatahub.io/gateway-access=true --overwrite
+```
+
 ### Step 3: Create a PostgreSQL BDD for Models-as-a-Service
 
 1. Create the PostgreSQL secret and configuration
@@ -355,15 +360,21 @@ deployment.apps/postgres condition met
 apiVersion: datasciencecluster.opendatahub.io/v2
 kind: DataScienceCluster
 metadata:
+  labels:
+    app.kubernetes.io/name: datasciencecluster
   name: default-dsc
 spec:
   components:
+    ogx:
+      managementState: Managed
     sparkoperator:
       managementState: Removed
     kserve:
       managementState: Managed
+      modelCache:
+        managementState: Removed
       modelsAsService:
-        managementState: Managed              <<<--- Change this line
+        managementState: Removed
       nim:
         airGapped: false
         managementState: Managed
@@ -389,6 +400,7 @@ spec:
     ray:
       managementState: Managed
     kueue:
+      autoCreateQueues: false
       defaultClusterQueueName: default
       defaultLocalQueueName: default
       managementState: Removed
@@ -403,6 +415,10 @@ spec:
       managementState: Managed
     llamastackoperator:
       managementState: Managed
+    aigateway:
+      managementState: Managed              <<<<--- Change this line
+      modelsAsAService:                     <<<<--- Change this line
+        managementState: Managed
     trainingoperator:
       managementState: Removed
 ```
@@ -436,11 +452,14 @@ spec:
 2. Verify 
 ```
 oc get crd | grep maas.opendatahub.io
-maasauthpolicies.maas.opendatahub.io
-maasmodelrefs.maas.opendatahub.io
-maassubscriptions.maas.opendatahub.io
-externalmodels.maas.opendatahub.io
-tenants.maas.opendatahub.io
+aitenants.maas.opendatahub.io                                                      2026-09-02T13:00:36Z
+configs.maas.opendatahub.io                                                        2026-09-02T13:00:37Z
+externalmodels.maas.opendatahub.io                                                 2026-09-02T13:00:37Z
+maasauthpolicies.maas.opendatahub.io                                               2026-09-02T13:00:37Z
+maasmodelrefs.maas.opendatahub.io                                                  2026-09-02T13:00:37Z
+maassubscriptions.maas.opendatahub.io                                              2026-09-02T13:00:37Z
+maastenantconfigs.maas.opendatahub.io                                              2026-09-02T13:00:37Z
+tenants.maas.opendatahub.io                                                        2026-09-02T13:00:37Z
 ```
 
 ### Step 5: Deploy a model with MaaS
@@ -458,6 +477,7 @@ tenants.maas.opendatahub.io
 
 ### Step 6: Add MaaS subscription
 
+
 #### What's a subscription
 
 In Red Hat OpenShift AI, you can use Models-as-a-Service (MaaS) subscriptions to manage quotas and token limits for AI model serving. With subscriptions, you can grant specific groups quotas for models with configurable token limits based on user group membership.
@@ -471,3 +491,15 @@ When multiple teams share large language models, you can use subscriptions to pe
 * Allow users to belong to multiple subscriptions based on their group memberships
 
 MaaS assigns users to subscriptions based on their OpenShift group membership. When a user belongs to multiple groups with different subscriptions, the system uses the subscription with the highest priority level.
+
+1. Create a Authorization policies 
+
+![maas-auth](../images/maas-auth-policy.png)
+
+2. Create a MaaS Production subscription
+
+![maas-auth](../images/maas-prod-subscription.png)
+
+![maas-auth](../images/maas-qa-subscription.png)
+
+![maas-auth](../images/maas-overview-subscription.png)
