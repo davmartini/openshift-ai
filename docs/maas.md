@@ -693,3 +693,164 @@ spec:
 #### LLM Performance dashboard
 
 ![maas-monitoring](../images/maas-monitoring5.png)
+
+
+## Enable MaaS Observability (logs)
+
+
+### Configruation
+
+1. Install loki operator
+
+2. Deploy a S3 if you don't have it
+
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-secret
+  namespace: redhat-ods-monitoring
+stringData:
+  access_key_id: minio
+  access_key_secret: minio123
+  bucketnames: loki
+  endpoint: http://minio.redhat-ods-monitoring.svc:9000
+  region: us-east-1
+type: Opaque
+```
+
+```
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data
+  namespace: redhat-ods-monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: redhat-ods-monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: quay.io/minio/minio:latest
+          command:
+            - minio
+            - server
+            - /data
+            - --console-address
+            - ":9001"
+          env:
+            - name: MINIO_ROOT_USER
+              value: minio
+            - name: MINIO_ROOT_PASSWORD
+              value: minio123
+          ports:
+            - containerPort: 9000
+              name: api
+            - containerPort: 9001
+              name: console
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: minio-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: redhat-ods-monitoring
+spec:
+  selector:
+    app: minio
+  ports:
+    - port: 9000
+      targetPort: 9000
+      name: api
+    - port: 9001
+      targetPort: 9001
+      name: console
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-create-bucket
+  namespace: redhat-ods-monitoring
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: quay.io/minio/mc:latest
+          env:
+            - name: HOME
+              value: /tmp
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until mc alias set local http://minio.redhat-ods-monitoring.svc:9000 minio minio123; do
+                echo "Waiting for MinIO..."
+                sleep 5
+              done
+              mc mb local/loki --ignore-existing
+              echo "Bucket 'loki' ready"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+  backoffLimit: 5
+```
+
+3. Deploy loki stack
+```
+apiVersion: loki.grafana.com/v1
+kind: LokiStack
+metadata:
+  name: usage
+  namespace: redhat-ods-monitoring
+spec:
+  limits:
+    global:
+      otlp:
+        streamLabels:
+          resourceAttributes:
+            - name: service.name
+            - name: subscription
+            - name: model
+            - name: response_type
+            - name: kubernetes_namespace_name
+  managementState: Managed
+  size: 1x.demo
+  storage:
+    schemas:
+      - effectiveDate: "2024-10-01"
+        version: v13
+    secret:
+      credentialMode: static
+      name: minio-secret
+      type: s3
+  storageClassName: gp3-csi
+  tenants:
+    mode: openshift-logging
+```
