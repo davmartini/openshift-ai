@@ -622,3 +622,52 @@ prometheus-data-science-monitoringstack-0                     3/3     Running   
 tempo-data-science-tempomonolithic-0                          3/3     Running   0          105s
 thanos-querier-data-science-thanos-querier-7857b974bb-2mz8n   1/1     Running   0          107s
 ```
+
+3. Apply Gateway Telemetry if no exist
+```
+apiVersion: extensions.kuadrant.io/v1alpha1
+kind: TelemetryPolicy
+metadata:
+  name: maas-telemetry
+  namespace: openshift-ingress
+  labels:
+    app.kubernetes.io/part-of: maas-observability
+spec:
+  metrics:
+    default:
+      labels:
+        model: responseBodyJSON("/model")
+        user: auth.identity.userid
+        # Subscription metadata for usage attribution and billing
+        subscription: auth.identity.selected_subscription
+        # Before RHOAI 3.4.4 (RHOAIENG-79318) organization_id and cost_center must be omitted
+        # organization_id: auth.identity.subscription_info.organizationId
+        # cost_center: auth.identity.subscription_info.costCenter
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: maas-default-gateway
+```
+
+```
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: latency-per-subscription
+  namespace: openshift-ingress
+spec:
+  selector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-name: maas-default-gateway
+  metrics:
+  - providers:
+    - name: prometheus
+    overrides:
+    - match:
+        metric: REQUEST_DURATION
+        mode: CLIENT_AND_SERVER
+      tagOverrides:
+        subscription:
+          operation: UPSERT
+          value: request.headers["x-maas-subscription"]
+```
