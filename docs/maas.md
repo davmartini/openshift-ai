@@ -672,24 +672,24 @@ spec:
           value: request.headers["x-maas-subscription"]
 ```
 
-### Result
+### Monitoring Dashboaerds
 
-#### 
+#### Cluster dashboard
 
 ![maas-monitoring](../images/maas-monitoring1.png)
 
-#### 
+#### Model dashboard
 
 ![maas-monitoring](../images/maas-monitoring2.png)
 
-#### 
+#### LLM Trafic dashboard
 
 ![maas-monitoring](../images/maas-monitoring3.png)
 
-#### 
+#### MaaS subscription usage dashboard
 
 ![maas-monitoring](../images/maas-monitoring4.png)
 
-#### 
+#### LLM Performance dashboard
 
 ![maas-monitoring](../images/maas-monitoring5.png)
