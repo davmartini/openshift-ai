@@ -513,3 +513,112 @@ MaaS assigns users to subscriptions based on their OpenShift group membership. W
 ![api-key](../images/api-key-02.png)
 
 ![api-key](../images/api-key-03.png)
+
+## Test model access via MaaS
+
+1. Define env variables
+```
+# MaaS endpoint
+DOMAIN=$(oc get ingresses.config/cluster -o jsonpath='{.spec.domain}')
+HOST="https://maas.${DOMAIN}"
+
+# Personal API key
+API_KEY=<YOUR API KEY>
+```
+
+2. List available model
+```
+curl -sk -H "Authorization: Bearer ${API_KEY}" "${HOST}/v1/models" |jq .
+{
+  "data": [
+    {
+      "id": "publishers/dmartini-ai/models/redhataiqwen25-7b-instruct-maa",
+      "created": 1788416766,
+      "object": "model",
+      "owned_by": "dmartini-ai/redhataiqwen25-7b-instruct-maa",
+      "kind": "LLMInferenceService",
+      "url": "https://maas.apps.cluster-p42wn.p42wn.sandbox1365.opentlc.com/",
+      "ready": true,
+      "modelDetails": {
+        "displayName": "RedHatAI/Qwen2.5-7B-Instruct-MaaS"
+      },
+      "subscriptions": [
+        {
+          "name": "prodution-subscription",
+          "displayName": "prodution-subscription"
+        }
+      ]
+    }
+  ],
+  "object": "list"
+}
+```
+
+```
+# Env model
+MODEL=$(curl -sk -H "Authorization: Bearer ${API_KEY}" "${HOST}/v1/models" | jq -r '.data[0].id')
+```
+
+3. Request available model via MaaS
+```
+for i in $(seq 1 16); do
+  curl -sk -H "Authorization: Bearer ${API_KEY}" \
+    -H "Content-Type: application/json" \
+    -X POST "${HOST}/v1/chat/completions" \
+    -d '{"model": "publishers/dmartini-ai/models/redhataiqwen25-7b-instruct-maa","messages": [{"role": "user", "content": "Bonjour, peux-tu te présenter ?"}],"max_tokens":50}'
+    "${MODEL_URL}/v1/chat/completions"
+done
+```
+
+
+## Enable MaaS Observability (metriques)
+
+### Prerequisites
+
+* Tempo Operator
+* Red Hat build of OpenTelemetry Operator
+* Cluster Observability Operator
+
+### Configuration
+
+1. Enable Monitoring for MaaS
+```
+oc patch dsci default-dsci --type=merge -p '{
+  "spec": {
+    "monitoring": {
+      "namespace": "redhat-ods-monitoring",
+      "metrics": {
+        "replicas": 1,
+        "storage": {
+          "size": "5Gi",
+          "retention": "90d"
+        }
+      },
+      "traces": {
+        "sampleRatio": "0.1",
+        "storage": {
+          "backend": "pv",
+          "retention": "2160h"
+        }
+      }
+    }
+  }
+}'
+```
+
+2. Check deployment
+```
+oc get pods -n redhat-ods-monitoring
+NAME                                                          READY   STATUS    RESTARTS   AGE
+alertmanager-data-science-monitoringstack-0                   2/2     Running   0          105s
+alertmanager-data-science-monitoringstack-1                   2/2     Running   0          105s
+data-science-collector-collector-0                            1/1     Running   0          107s
+data-science-collector-collector-1                            1/1     Running   0          107s
+data-science-collector-targetallocator-674cf6bf9d-pnf5m       1/1     Running   0          106s
+data-science-perses-0                                         1/1     Running   0          107s
+data-science-prometheus-cluster-proxy-7955589bdb-zw4zp        1/1     Running   0          107s
+data-science-prometheus-namespace-proxy-56fd5f657c-hz8p7      2/2     Running   0          107s
+prometheus-data-science-monitoringstack-0                     3/3     Running   0          105s
+tempo-data-science-tempomonolithic-0                          3/3     Running   0          105s
+thanos-querier-data-science-thanos-querier-7857b974bb-2mz8n   1/1     Running   0          107s
+```
