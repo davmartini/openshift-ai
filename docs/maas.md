@@ -671,3 +671,25 @@ spec:
           operation: UPSERT
           value: request.headers["x-maas-subscription"]
 ```
+
+### Result
+
+#### 
+
+![maas-monitoring](../images/maas-monitoring1.png)
+
+#### 
+
+![maas-monitoring](../images/maas-monitoring2.png)
+
+#### 
+
+![maas-monitoring](../images/maas-monitoring3.png)
+
+#### 
+
+![maas-monitoring](../images/maas-monitoring4.png)
+
+#### 
+
+![maas-monitoring](../images/maas-monitoring5.png)
