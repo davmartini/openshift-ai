@@ -462,7 +462,7 @@ maastenantconfigs.maas.opendatahub.io                                           
 tenants.maas.opendatahub.io                                                        2026-09-02T13:00:37Z
 ```
 
-### Step 5: Deploy a model with MaaS
+## Deploy a model with MaaS
 
 > [!WARNING]
 > verify than you have this label on your namespace where you deploy your model **maas.opendatahub.io/gateway-access: 'true'**
@@ -475,7 +475,7 @@ tenants.maas.opendatahub.io                                                     
 
 ![llm-maas](../images/llm-maas4.png)
 
-### Step 6: Add MaaS subscription
+## Add MaaS subscription
 
 
 #### What's a subscription
