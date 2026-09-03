@@ -869,5 +869,6 @@ oc patch configs.maas.opendatahub.io default --type=merge -p '{"spec":{"usageLog
 
 ### Dashoboard result
 
-**Live user token consumtion**
+**Live user token consumtion for user USER01**
+
 ![maas-monitoring](../images/maas-monitoring6.png)
