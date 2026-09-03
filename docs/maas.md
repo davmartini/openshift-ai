@@ -698,7 +698,7 @@ spec:
 ## Enable MaaS Observability (logs)
 
 
-### Configruation
+### Prerequisites 
 
 1. Install loki operator
 
@@ -854,3 +854,20 @@ spec:
   tenants:
     mode: openshift-logging
 ```
+
+4. Check all is good
+```
+oc wait lokistack/usage -n redhat-ods-monitoring --for=jsonpath='{.status.conditions[?(@.type=="Ready")].status}'=True --timeout=300s
+```
+
+### Logging configuration
+
+1. Enable logging
+```
+oc patch configs.maas.opendatahub.io default --type=merge -p '{"spec":{"usageLogging":true}}'
+```
+
+### Dashoboard result
+
+**Live user token consumtion**
+![maas-monitoring](../images/maas-monitoring6.png)
