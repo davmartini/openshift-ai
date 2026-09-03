@@ -500,6 +500,16 @@ MaaS assigns users to subscriptions based on their OpenShift group membership. W
 
 ![maas-auth](../images/maas-prod-subscription.png)
 
+3. Create a MaaS QA subscription
+
 ![maas-auth](../images/maas-qa-subscription.png)
 
 ![maas-auth](../images/maas-overview-subscription.png)
+
+4. Generate API Key
+
+![api-key](../images/api-key-01.png)
+
+![api-key](../images/api-key-02.png)
+
+![api-key](../images/api-key-03.png)
