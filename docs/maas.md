@@ -597,6 +597,37 @@ for i in $(seq 1 16); do
 done
 ```
 
+or
+
+```
+topics=(
+  "France" "Espagne" "USA" "Japon" "Australie" 
+  "Portugal" "Senegal" "Coréé" 
+)
+
+actions=(
+  "Quelle est la capitale de "
+)
+
+for i in $(seq 1 16); do
+# Sélection aléatoire d'un élément dans chaque tableau
+  random_topic="${topics[$RANDOM % ${#topics[@]}]}"
+  random_action="${actions[$RANDOM % ${#actions[@]}]}"
+
+  PROMPT="$random_action $random_topic ?"
+  echo "--- Requête $i/16 : \"$PROMPT\" ---"
+
+  JSON_DATA=$(jq -n \
+  --arg model "$MODEL" \
+  --arg prompt "$PROMPT" \
+  '{model: $model, messages: [{role: "user", content: $prompt}]}')
+
+  curl -sk -H "Authorization: Bearer ${API_KEY}" \
+    -H "Content-Type: application/json" \
+    -X POST "${HOST}/v1/chat/completions" \
+    -d "$JSON_DATA" | jq .
+done
+```
 
 ## Enable MaaS Observability (metriques)
 
