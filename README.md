@@ -29,5 +29,6 @@ This repository resume all tests performed on a OpenShift cluster.
 [8. Models-as-a-Service (MaaS)](./docs/maas.md)  
 [9. Monitoring](./docs/monitoring.md)  
 [10. Benchmark](./docs/benchmark.md)  
-[Red Hat Build of Kueue](./docs/kueue)  
-[DRA](./docs/dra.md)
+[11. Red Hat Build of Kueue](./docs/kueue)  
+[12. DRA](./docs/dra.md)
+[13. (Bonus) Without GPU](./docs/nogpu.md)
